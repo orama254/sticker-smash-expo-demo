@@ -1,10 +1,13 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useState, useRef } from 'react';
 import { type ImageSource } from 'expo-image';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as MediaLibrary from 'expo-media-library';
 import { captureRef } from 'react-native-view-shot';
+import domtoimage from 'dom-to-image';
+
+import { generateRandomString } from '@/utils';
 
 
 import Button from '@/components/Button';
@@ -62,18 +65,36 @@ export default function Index() {
   };
 
   const onSaveImageAsync = async () => {
-    try {
-      const localUri = await captureRef(imageRef, {
-        height: 440,
-        quality: 1,
-      });
+    if (Platform.OS !== 'web') {
+      try {
+        const localUri = await captureRef(imageRef, {
+          height: 440,
+          quality: 1,
+        });
+  
+        await MediaLibrary.saveToLibraryAsync(localUri);
+        if(localUri) {
+          alert('Image saved successfully.');
+        }
+      } catch (error) {
+        console.log(error);
+      }      
+    } else {
+      try {
+        const dataUrl = await domtoimage.toJpeg(imageRef.current, { 
+          quality: 0.95,
+          width: 320,
+          height: 440,
+        });
 
-      await MediaLibrary.saveToLibraryAsync(localUri);
-      if(localUri) {
-        alert('Image saved successfully.');
+        let link = document.createElement('a');
+        link.download = `image-${generateRandomString(4)}.jpeg`;
+        link.href = dataUrl;
+        link.click();
+      } catch (error) {
+        console.log(error);
+        
       }
-    } catch (error) {
-      console.log(error);
     }
   };
 
