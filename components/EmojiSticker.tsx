@@ -12,6 +12,7 @@ export default function EmojiSticker({ imageSize, stickerSource }: Props) {
     const scaleImage = useSharedValue(imageSize);
     const translateX = useSharedValue(0);
     const translateY = useSharedValue(0);
+    const savedScaleImage = useSharedValue(imageSize);
 
     const doubleTap = Gesture.Tap()
         .numberOfTaps(2)
@@ -51,15 +52,28 @@ export default function EmojiSticker({ imageSize, stickerSource }: Props) {
           });
 
 
+          const pinch = Gesture.Pinch()
+            .onUpdate((e) => {
+              scaleImage.value = savedScaleImage.value * e.scale;
+            })
+            .onEnd(() => {
+              savedScaleImage.value = scaleImage.value;
+            });
+
+            
+            
+      const draggablePinch = Gesture.Race(drag, pinch);
+
+
   return (
-    <GestureDetector gesture={drag}>
+    <GestureDetector gesture={draggablePinch}>
         <Animated.View style={[containerStyle, { top: -350 }]}>
             <GestureDetector gesture={doubleTap}>
             <Animated.Image 
                 source={stickerSource} 
                 resizeMode={'contain'}
                 style={[imageStyle, { width: imageSize, height: imageSize }]} />
-            </GestureDetector>
+                </GestureDetector>
         </Animated.View>
     </GestureDetector>
   );
